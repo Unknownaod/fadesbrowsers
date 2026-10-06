@@ -46,9 +46,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "PASTE_YOUR_PUBLIC_KEY_HERE",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVFNjA2MUJCRDU3MTFBOUYKUldTZkduSFZ1MkZnN2pUaWZJa0ZNc1k5K1hMalVUMzRJcCtaSkxGU1VrSTFtYUtXZ1Y0Vzl5UUEK",
       "endpoints": [
-        "https://github.com/YOUR_USER/YOUR_REPO/releases/latest/download/latest.json"
+        "https://github.com/Unknownaod/fadesbrowsers/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
