@@ -1393,6 +1393,31 @@ const hideDownloadFlyout = useCallback(() => {
     if (target) setActiveTab(target.id);
   }, []);
 
+
+const [dragTabId, setDragTabId] = useState(null);
+const [dropTarget, setDropTarget] = useState(null); // { id, side: "before" | "after" }
+
+const reorderTab = useCallback((dragId, targetId, side) => {
+  if (dragId === targetId) return;
+
+  setTabs((items) => {
+    const from = items.findIndex((t) => t.id === dragId);
+    if (from < 0) return items;
+
+    const next = [...items];
+    const [moved] = next.splice(from, 1);
+
+    let to = next.findIndex((t) => t.id === targetId);
+    if (to < 0) return items;
+    if (side === "after") to += 1;
+
+    next.splice(to, 0, moved);
+
+    // keep pinned tabs grouped on the left
+    return [...next.filter((t) => t.pinned), ...next.filter((t) => !t.pinned)];
+  });
+}, []);
+  
   /* =======================================================
    * NAVIGATION
    * ======================================================= */
@@ -2627,16 +2652,49 @@ const handleLoadState = useCallback(
 
           <div className="tabs">
             {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                className={`tab ${tab.id === currentTab?.id ? "active" : ""} ${
-                  tab.private ? "private" : ""
-                } ${tab.pinned ? "pinned" : ""} ${tab.loading ? "loading" : ""}`}
-                onClick={() => switchTab(tab.id)}
-                onMouseDown={(event) => handleTabMouseDown(event, tab.id)}
-                onContextMenu={(event) => handleTabContextMenu(event, tab.id)}
-                title={tab.private ? `Private tab – ${tab.title}` : tab.title}
-              >
+<button
+  key={tab.id}
+  className={`tab ${tab.id === currentTab?.id ? "active" : ""} ${
+    tab.private ? "private" : ""
+  } ${tab.pinned ? "pinned" : ""} ${tab.loading ? "loading" : ""} ${
+    dragTabId === tab.id ? "dragging" : ""
+  } ${
+    dropTarget?.id === tab.id && dragTabId !== tab.id
+      ? `drop-${dropTarget.side}`
+      : ""
+  }`}
+  draggable
+  onDragStart={(event) => {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(tab.id));
+    setDragTabId(tab.id);
+  }}
+  onDragOver={(event) => {
+    if (dragTabId === null) return;
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const side = event.clientX < rect.left + rect.width / 2 ? "before" : "after";
+    setDropTarget((cur) =>
+      cur?.id === tab.id && cur.side === side ? cur : { id: tab.id, side }
+    );
+  }}
+  onDrop={(event) => {
+    event.preventDefault();
+    if (dragTabId !== null && dropTarget) {
+      reorderTab(dragTabId, dropTarget.id, dropTarget.side);
+    }
+    setDragTabId(null);
+    setDropTarget(null);
+  }}
+  onDragEnd={() => {
+    setDragTabId(null);
+    setDropTarget(null);
+  }}
+  onClick={() => switchTab(tab.id)}
+  onMouseDown={(event) => handleTabMouseDown(event, tab.id)}
+  onContextMenu={(event) => handleTabContextMenu(event, tab.id)}
+  title={tab.private ? `Private tab – ${tab.title}` : tab.title}
+>
                 <span className="tab-favicon">
                   {tab.loading ? (
                     <span className="tab-spinner" />
